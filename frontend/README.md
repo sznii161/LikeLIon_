@@ -11,40 +11,53 @@
 cd frontend
 npm install
 npm run dev
-# → http://localhost:5173
+# → http://localhost:3000
 ```
 
 > 백엔드 서버(`http://localhost:8000`)가 함께 실행되어 있어야 카페 데이터가 로드됩니다.
 
----
+### 백엔드 서버 실행
 
-## 카카오맵 API 키 설정
-
-`public/index.html`의 `YOUR_APP_KEY`를 카카오 개발자 콘솔의 **JavaScript 키**로 교체해야 지도가 활성화됩니다.
-
-```html
-<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=services"></script>
+```bash
+cd backend
+venv\Scripts\activate       # Windows
+# source venv/bin/activate  # Mac/Linux
+python manage.py runserver
 ```
 
-키 발급: https://developers.kakao.com → 내 애플리케이션 → 앱 키 → JavaScript 키
-플랫폼 등록: 앱 설정 → 플랫폼 → Web → `http://localhost:5173` 추가
+---
+
+## 환경변수 설정
+
+`frontend/` 폴더에 `.env` 파일을 새로 만들고 아래 내용을 입력하세요.
+(`.env`는 `.gitignore`에 등록되어 있어 깃허브에 올라가지 않습니다)
+
+```
+VITE_KAKAO_MAP_KEY=여기에_JavaScript_키_입력
+```
+
+> 카카오 개발자 콘솔 → 앱 키 → **JavaScript 키** 사용
+> 플랫폼 등록: 앱 설정 → 플랫폼 → Web → `http://localhost:3000` 추가 필요
 
 ---
 
 ## 파일 구조
 
 ```
-src/
-├── App.jsx                          # 메인 레이아웃 + API 연결 + 카카오맵 초기화
-├── App.css                          # 전체 레이아웃 및 컴포넌트 스타일
-├── index.css                        # 디자인 토큰 (색상, 폰트, 변수)
-├── main.jsx                         # 진입점
-├── constants/
-│   └── scoreConfig.js               # 5대 지표 설정 + 우선순위 가중치 계산
-└── components/
-    ├── CategoryPrioritySelector.jsx  # 카공 우선순위 선택 UI
-    ├── CafeList.jsx                  # 카페 카드 가로 스크롤 목록
-    └── WorkspaceMarker.jsx           # 카카오맵 커스텀 마커
+frontend/
+├── index.html                       # 카카오맵 SDK 로드
+├── vite.config.js                   # Vite 설정 (포트 3000)
+└── src/
+    ├── App.jsx                      # 메인 레이아웃 + API 연결 + 바텀시트
+    ├── App.css                      # 전체 레이아웃 및 컴포넌트 스타일
+    ├── index.css                    # 디자인 토큰 (색상, 폰트, 변수)
+    ├── main.jsx                     # 진입점
+    ├── constants/
+    │   └── scoreConfig.js           # 5대 지표 설정 + 우선순위 가중치 계산
+    └── components/
+        ├── CategoryPrioritySelector.jsx  # 카공 우선순위 선택 UI
+        ├── CafeList.jsx                  # 카페 카드 세로 스크롤 목록
+        └── WorkspaceMarker.jsx           # 카카오맵 커스텀 마커
 ```
 
 ---
@@ -54,7 +67,8 @@ src/
 ### 1. 카카오맵 연동
 - 지도가 화면 전체 배경을 차지하는 플로팅 레이아웃
 - 카페별 커스텀 마커 (이모지 + 카페명)
-- 카드/마커 클릭 시 해당 위치로 지도 이동
+- 마커 클릭 시 해당 카페로 지도 이동
+- 지도 드래그/줌 정상 작동
 
 ### 2. 카공 우선순위 선택
 - 5대 지표를 중요한 순서대로 탭해서 1~5순위 설정
@@ -70,9 +84,16 @@ src/
 | 4순위 | 12% |
 | 5순위 | 8%  |
 
-### 4. 반응형 (PC + 모바일)
-- **PC**: 좌측 우선순위 패널 플로팅 + 하단 가로 스크롤 카페 카드
-- **모바일**: 우선순위 버튼 탭 → 슬라이드업 패널, 카드는 하단 가로 스크롤
+### 4. 드래그 바텀시트
+- 하단 패널을 드래그해서 3단계로 높이 조절
+  - 최소: 핸들만 보임 (지도 최대)
+  - 절반: 기본 상태
+  - 최대: 화면 85% (목록 최대)
+- 카페 카드 세로 스크롤
+
+### 5. 반응형 (PC + 모바일)
+- **PC**: 좌측 우선순위 패널 플로팅 + 하단 드래그 바텀시트
+- **모바일**: 우선순위 버튼 탭 → 슬라이드업 패널
 
 ---
 
@@ -81,7 +102,7 @@ src/
 `App.jsx`의 `API_BASE` 값을 백엔드 서버 주소에 맞게 수정하세요.
 
 ```js
-const API_BASE = 'http://localhost:8000'  // 기본값
+const API_BASE = 'http://localhost:8000'
 ```
 
 현재 사용 중인 엔드포인트:
@@ -103,8 +124,12 @@ const API_BASE = 'http://localhost:8000'  // 기본값
 
 ---
 
-## 미구현 (예정)
+## 미구현 / 논의 필요 (예정)
 
-- [ ] 로그인 / 회원가입
-- [ ] 카페 상세 페이지 / 모달
-- [ ] 리뷰 작성 UI
+| 기능 | 상태 | 비고 |
+|------|------|------|
+| 로그인 / 회원가입 | 논의 필요 | 닉네임 vs 이메일+비번 결정 필요 |
+| 마커 표시 방식 | 논의 필요 | 우선순위 기반 상위 N개만 표시 등 |
+| 내 위치 기반 기능 | 논의 필요 | 브라우저 geolocation 활용 가능 |
+| 카페 상세 / 리뷰 팝업 | 논의 필요 | 모달 vs 새 페이지 결정 필요 |
+| 사용자 리뷰 작성 | 논의 필요 | 로그인 방향과 연계 |
