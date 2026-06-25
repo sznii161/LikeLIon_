@@ -1,17 +1,18 @@
 from rest_framework import viewsets, mixins
 from rest_framework.filters import OrderingFilter
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet, NumberFilter
 from .models import Workspace, SpaceReview
 from .serializers import WorkspaceSerializer, SpaceReviewSerializer
 
 
 class WorkspaceFilter(FilterSet):
-    min_score_plug = NumberFilter(field_name="score_plug", lookup_expr="gte")
-    min_score_wifi = NumberFilter(field_name="score_wifi", lookup_expr="gte")
-    min_score_noise = NumberFilter(field_name="score_noise", lookup_expr="gte")
+    min_score_plug    = NumberFilter(field_name="score_plug",    lookup_expr="gte")
+    min_score_wifi    = NumberFilter(field_name="score_wifi",    lookup_expr="gte")
+    min_score_noise   = NumberFilter(field_name="score_noise",   lookup_expr="gte")
     min_score_comfort = NumberFilter(field_name="score_comfort", lookup_expr="gte")
-    min_score_table = NumberFilter(field_name="score_table", lookup_expr="gte")
+    min_score_table   = NumberFilter(field_name="score_table",   lookup_expr="gte")
 
     class Meta:
         model = Workspace
@@ -28,18 +29,35 @@ class WorkspaceViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["-score_plug"]
 
 
-class SpaceReviewViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+class SpaceReviewViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     serializer_class = SpaceReviewSerializer
 
+    def get_permissions(self):
+        if self.action in ('create', 'destroy'):
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
     def get_workspace(self):
-        workspace_pk = self.kwargs["workspace_pk"]
         try:
-            return Workspace.objects.get(pk=workspace_pk)
+            return Workspace.objects.get(pk=self.kwargs["workspace_pk"])
         except Workspace.DoesNotExist:
-            raise NotFound(f"workspace {workspace_pk}를 찾을 수 없습니다.")
+            raise NotFound(f"workspace {self.kwargs['workspace_pk']}를 찾을 수 없습니다.")
 
     def get_queryset(self):
         return SpaceReview.objects.filter(workspace=self.get_workspace()).order_by("-created_at")
 
     def perform_create(self, serializer):
-        serializer.save(workspace=self.get_workspace())
+        workspace = self.get_workspace()
+        if SpaceReview.objects.filter(workspace=workspace, user=self.request.user).exists():
+            raise PermissionDenied("이미 이 카페에 리뷰를 작성했습니다.")
+        serializer.save(workspace=workspace, user=self.request.user)
+
+    def perform_destroy(self, instance):
+        if instance.user != self.request.user:
+            raise PermissionDenied("본인 리뷰만 삭제할 수 있습니다.")
+        instance.delete()

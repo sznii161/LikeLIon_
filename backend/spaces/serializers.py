@@ -25,12 +25,13 @@ class SpaceReviewSerializer(serializers.ModelSerializer):
     score_wifi    = serializers.FloatField(**_SCORE_FIELD)
     score_noise   = serializers.FloatField(**_SCORE_FIELD)
     score_comfort = serializers.FloatField(**_SCORE_FIELD)
+    username      = serializers.CharField(source='user.username', read_only=True)
 
     class Meta:
         model = SpaceReview
         fields = [
-            "id", "workspace",
+            "id", "workspace", "username",
             "score_plug", "score_wifi", "score_noise", "score_comfort",
             "comment", "created_at",
         ]
-        read_only_fields = ["id", "workspace", "created_at"]
+        read_only_fields = ["id", "workspace", "username", "created_at"]

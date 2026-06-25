@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 
@@ -49,12 +50,18 @@ class CafeReviewRaw(models.Model):
 
 class SpaceReview(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='reviews')
     score_plug = models.FloatField(validators=[MinValueValidator(1), MaxValueValidator(5), validate_half_step])
     score_wifi = models.FloatField(validators=[MinValueValidator(1), MaxValueValidator(5), validate_half_step])
     score_noise = models.FloatField(validators=[MinValueValidator(1), MaxValueValidator(5), validate_half_step])
     score_comfort = models.FloatField(validators=[MinValueValidator(1), MaxValueValidator(5), validate_half_step])
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['workspace', 'user'], name='unique_review_per_user')
+        ]
 
     def __str__(self):
         return f"{self.workspace.name} ({self.created_at.date()})"
