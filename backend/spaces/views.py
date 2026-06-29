@@ -1,10 +1,10 @@
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet, NumberFilter
-from .models import Workspace, SpaceReview
-from .serializers import WorkspaceSerializer, SpaceReviewSerializer
+from .models import Workspace, SpaceReview, CafeReviewRaw
+from .serializers import WorkspaceSerializer, SpaceReviewSerializer, CafeReviewRawSerializer
 
 
 class WorkspaceFilter(FilterSet):
@@ -61,3 +61,14 @@ class SpaceReviewViewSet(
         if instance.user != self.request.user:
             raise PermissionDenied("본인 리뷰만 삭제할 수 있습니다.")
         instance.delete()
+
+
+class CafeReviewRawListView(generics.ListAPIView):
+    serializer_class = CafeReviewRawSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        workspace_pk = self.kwargs["workspace_pk"]
+        if not Workspace.objects.filter(pk=workspace_pk).exists():
+            raise NotFound(f"workspace {workspace_pk}를 찾을 수 없습니다.")
+        return CafeReviewRaw.objects.filter(workspace_id=workspace_pk).order_by("-crawled_at")

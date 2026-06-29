@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 def validate_half_step(value):
@@ -42,7 +43,7 @@ class CafeReviewRaw(models.Model):
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
     text = models.TextField()
     url = models.URLField(max_length=1000, blank=True)
-    crawled_at = models.DateTimeField(auto_now_add=True)
+    crawled_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.workspace.name} [{self.source}] {self.crawled_at.date()}"

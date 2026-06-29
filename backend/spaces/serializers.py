@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Workspace, SpaceReview, validate_half_step
+from .models import Workspace, SpaceReview, CafeReviewRaw, validate_half_step
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -18,6 +18,12 @@ _SCORE_FIELD = dict(
     max_value=5,
     validators=[validate_half_step],
 )
+
+
+class CafeReviewRawSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CafeReviewRaw
+        fields = ["source", "text", "url", "crawled_at"]
 
 
 class SpaceReviewSerializer(serializers.ModelSerializer):

@@ -44,6 +44,7 @@ Authorization: Bearer <access_token>
 | 7 | `GET` | `/api/spaces/<id>/reviews/` | 카페 리뷰 목록 조회 | ❌ | ✅ |
 | 8 | `POST` | `/api/spaces/<id>/reviews/` | 카페 리뷰 등록 | ✅ | ✅ |
 | 9 | `DELETE` | `/api/spaces/<id>/reviews/<review_id>/` | 카페 리뷰 삭제 | ✅ | ✅ |
+| 10 | `GET` | `/api/spaces/<id>/raw-reviews/` | 블로그 리뷰 목록 조회 | ❌ | ✅ |
 
 > 상태: ⬜ 미구현 / 🟡 개발중 / ✅ 완료
 
@@ -324,6 +325,35 @@ curl "http://localhost:8000/api/spaces/?min_score_noise=4&min_score_table=5"
 **Response — 404 Not Found**
 ```json
 { "detail": "찾을 수 없습니다." }
+```
+
+---
+
+### 🔟 `GET /api/spaces/<id>/raw-reviews/` — 블로그 리뷰 목록 조회
+
+네이버 블로그에서 수집한 원문 리뷰 목록을 반환합니다.
+
+**Path Parameter**
+
+| 파라미터 | 타입 | 설명 |
+|---|---|---|
+| `id` | integer | 카페 고유 ID |
+
+**Response — 200 OK**
+```json
+[
+  {
+    "source": "naver_blog",
+    "text": "조용하고 콘센트도 많아서 카공하기 딱 좋아요!",
+    "url": "https://blog.naver.com/example/123456",
+    "crawled_at": "2026-05-28T12:24:00+09:00"
+  }
+]
+```
+
+**Response — 404 Not Found**
+```json
+{ "detail": "workspace {id}를 찾을 수 없습니다." }
 ```
 
 ---
