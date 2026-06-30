@@ -57,6 +57,20 @@ function ReviewCard({ review, currentUser, onDelete }) {
   )
 }
 
+// 블로그에서 가져온 후기 카드 (텍스트만, 섹션 단위로 구분)
+function RawReviewCard({ review }) {
+  return (
+    <a
+      className="raw-review-item"
+      href={review.url}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <p className="raw-review-text">{review.text}</p>
+    </a>
+  )
+}
+
 // 별점 선택 컴포넌트 (0.5 단위)
 function StarPicker({ value, onChange }) {
   return (
@@ -165,6 +179,7 @@ function CafeDetailSheet({ cafe, currentUser, onClose, onLoginRequest }) {
   const [reviews, setReviews] = useState([])
   const [reviewLoading, setReviewLoading] = useState(true)
   const [reviewError, setReviewError] = useState(null)
+  const [rawReviews, setRawReviews] = useState([])
 
   // 내가 이미 리뷰를 썼는지 확인
   const myReview = reviews.find((r) => r.username === currentUser)
@@ -178,6 +193,12 @@ function CafeDetailSheet({ cafe, currentUser, onClose, onLoginRequest }) {
       .then(setReviews)
       .catch((e) => setReviewError(e.message))
       .finally(() => setReviewLoading(false))
+
+    // 블로그에서 가져온 원문 후기 (점수 없는 텍스트만)
+    fetch(`${API_BASE}/api/spaces/${cafe.id}/raw-reviews/`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((data) => setRawReviews(data.slice(0, 5))) // 너무 많지 않게 최대 5개만
+      .catch(() => setRawReviews([]))
   }, [cafe])
 
   // 리뷰 작성 완료 → 목록에 추가
@@ -274,7 +295,7 @@ function CafeDetailSheet({ cafe, currentUser, onClose, onLoginRequest }) {
             </>
           )}
 
-          {/* 리뷰 목록 */}
+          {/* 방문 리뷰 (유저 별점 리뷰) */}
           <section className="detail-section">
             <h3 className="detail-section-title">방문 리뷰</h3>
 
@@ -299,17 +320,34 @@ function CafeDetailSheet({ cafe, currentUser, onClose, onLoginRequest }) {
             )}
             {!reviewLoading && !reviewError && reviews.length > 0 && (
               <div className="review-list">
-                {reviews.map((rv) => (
-                  <ReviewCard
-                    key={rv.id}
-                    review={rv}
-                    currentUser={currentUser}
-                    onDelete={handleDelete}
-                  />
-                ))}
+                {[...reviews]
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                  .map((rv) => (
+                    <ReviewCard
+                      key={rv.id}
+                      review={rv}
+                      currentUser={currentUser}
+                      onDelete={handleDelete}
+                    />
+                  ))}
               </div>
             )}
           </section>
+
+          {/* 블로그 후기 섹션 — 방문 리뷰와 완전히 분리 */}
+          {!reviewLoading && rawReviews.length > 0 && (
+            <>
+              <hr className="detail-divider" />
+              <section className="detail-section raw-review-section">
+                <h3 className="detail-section-title">📝 블로그 후기</h3>
+                <div className="raw-review-list">
+                  {rawReviews.map((rv, idx) => (
+                    <RawReviewCard key={idx} review={rv} />
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
         </div>
 
         <button className="detail-close-btn" onClick={onClose}>✕</button>
