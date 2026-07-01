@@ -27,6 +27,8 @@ backend/reviews_fulltext.csv
 backend/reviews_scored_sentences.csv
 backend/crawl_fulltext.py
 backend/extract_scored_sentences.py
+docs/data/*.csv
+docs/data/*.json
 
 # ── Frontend env ───────────────────────────────────────────────────
 frontend/.env
