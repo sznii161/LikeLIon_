@@ -8,7 +8,7 @@ import AuthModal from './components/AuthModal'
 import { getSavedUsername, logout } from './utils/auth'
 import './App.css'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
 const SEONGDONG_CENTER = { lat: 37.5633, lng: 127.0371 }
 const MARKER_LIMIT = 30
 const LOCATION_CACHE_KEY = 'tracklook_user_location'

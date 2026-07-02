@@ -1342,3 +1342,38 @@
   transition: background 0.15s;
 }
 .review-delete-btn:hover { background: #ffe0e0; }
+/* 블로그 후기 섹션 — 방문 리뷰와 분리된 별도 섹션 */
+.raw-review-section {
+  background: var(--cream-dark, #F2EDE4);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 0 -2px;
+}
+
+.raw-review-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.raw-review-item {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #E2DDD4);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.raw-review-item:last-child {
+  border-bottom: none;
+}
+.raw-review-item:hover {
+  opacity: 0.75;
+}
+
+.raw-review-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--brown, #4A2520);
+  margin: 0;
+}
