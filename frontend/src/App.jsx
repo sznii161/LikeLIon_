@@ -11,6 +11,7 @@ import './App.css'
 const API_BASE = 'http://localhost:8000'
 const SEONGDONG_CENTER = { lat: 37.5633, lng: 127.0371 }
 const MARKER_LIMIT = 30
+const RADIUS_M = 2000 // 2km 반경
 const LOCATION_CACHE_KEY = 'tracklook_user_location'
 const LOCATION_CACHE_TTL = 1000 * 60 * 10 // 10분
 
@@ -141,6 +142,19 @@ function App() {
     setLocationError(null)
     setLocLoading(true)
 
+    // 🎬 발표 영상 촬영용 하드코딩 — 실제 위치 대신 성동구 중심 사용
+    // 나중에 풀려면 아래 DEMO_MODE를 false로 바꾸면 됨
+    const DEMO_MODE = false
+
+    if (DEMO_MODE) {
+      const { lat, lng } = SEONGDONG_CENTER
+      setUserLocation({ lat, lng })
+      saveLocationCache(lat, lng)
+      setLocLoading(false)
+      if (map) map.panTo(new window.kakao.maps.LatLng(lat, lng))
+      return
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords
@@ -174,16 +188,27 @@ function App() {
   // 위치만 있을 때 → 거리순
   // 둘 다 없으면 → API 순서 그대로
   const top30 = useMemo(() => {
-    let list = [...cafes]
+    // 각 카페에 거리 추가
+    let list = [...cafes].map((cafe) => ({
+      ...cafe,
+      _dist: userLocation
+        ? getDistanceMeters(userLocation.lat, userLocation.lng, parseFloat(cafe.latitude), parseFloat(cafe.longitude))
+        : null,
+    }))
+
+    // 위치 있으면 2km 반경 필터 (없으면 전체 fallback)
+    if (userLocation) {
+      const nearby = list.filter((c) => c._dist <= RADIUS_M)
+      list = nearby.length > 0 ? nearby : list
+    }
+
+    // 정렬: 우선순위 완성 → 점수순 / 위치만 있으면 → 거리순 / 둘 다 없으면 → API 순서
     if (priorityOrder.length === 5) {
       list.sort((a, b) => calcWeightedScore(b, priorityOrder) - calcWeightedScore(a, priorityOrder))
     } else if (userLocation) {
-      list.sort((a, b) => {
-        const dA = getDistanceMeters(userLocation.lat, userLocation.lng, parseFloat(a.latitude), parseFloat(a.longitude))
-        const dB = getDistanceMeters(userLocation.lat, userLocation.lng, parseFloat(b.latitude), parseFloat(b.longitude))
-        return dA - dB
-      })
+      list.sort((a, b) => a._dist - b._dist)
     }
+
     return list.slice(0, MARKER_LIMIT)
   }, [cafes, priorityOrder, userLocation])
 
